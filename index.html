@@ -512,9 +512,9 @@ async function saveCart(){
   const g=id=>document.getElementById(id).value;
   const nome=g('cn');
   if(!nome){toast('Nome do cartão obrigatório');return;}
-  const saldo=parseFloat(String(g('csa')).replace(/\./g,'').replace(',','.'))||0;
+  const saldo=(()=>{let r=String(g('csa')).trim();return parseFloat(r.includes(',')? r.replace(/\./g,'').replace(',','.') : r)||0;})();
   const parc=parseInt(g('cpa'))||0;
-  const valPar=parseFloat(String(g('cpv')).replace(/\./g,'').replace(',','.'))||0;
+  const valPar=(()=>{let r=String(g('cpv')).trim();return parseFloat(r.includes(',')? r.replace(/\./g,'').replace(',','.') : r)||0;})();
   const rec={nome,status:g('cs'),saldo,parcelas:parc,valorParcela:valPar,venc:g('cvn'),obs:g('co')||''};
   if(cform._edit!=null)DB.cartoes[cform._edit]=rec; else DB.cartoes.push(rec);
   await save();closeSheet();toast(cform._edit!=null?'Cartão atualizado ✓':'Cartão criado ✓');renderCartoes();
@@ -661,7 +661,7 @@ function openVendaSheet(idx){
 }
 async function saveVenda(){
   const g=id=>document.getElementById(id).value;
-  const n=parseFloat(String(g('vv')).replace(/\./g,'').replace(',','.'))||0;
+  const n=(()=>{let r=String(g('vv')).trim();return parseFloat(r.includes(',')? r.replace(/\./g,'').replace(',','.') : r)||0;})();
   if(!n){toast('Digite o valor');return;}
   const rec={data:g('vd'),valor:n,nota:g('vn')||''};
   if(vform._edit!=null)DB.vendas[vform._edit]=rec; else DB.vendas.push(rec);
@@ -713,7 +713,13 @@ function renderSheet(){
 }
 function syncForm(){
   const g=id=>{const e=document.getElementById(id);return e?e.value:undefined;};
-  const v=g('f-val'); if(v!==undefined){const n=parseFloat(String(v).replace(/\./g,'').replace(',','.'))||0;
+  const v=g('f-val'); if(v!==undefined){
+    // Aceita tanto vírgula quanto ponto como decimal
+    // Remove pontos de milhar (ex: 1.206,50) e troca vírgula por ponto
+    let raw=String(v).trim();
+    // Se tem vírgula: remove pontos de milhar e troca vírgula por ponto
+    if(raw.includes(',')){ raw=raw.replace(/\./g,'').replace(',','.'); }
+    const n=parseFloat(raw)||0;
     if(form.tipo==='Entrada'){form.entrada=n;form.saida=0;}else if(form.tipo==='Saída'){form.saida=n;form.entrada=0;}else{form.entrada=n;form.saida=0;}}
   if(g('f-conta')!==undefined)form.conta=g('f-conta');
   if(g('f-origem')!==undefined)form.contaOrigem=g('f-origem');
