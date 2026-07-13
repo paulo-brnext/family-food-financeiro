@@ -329,7 +329,8 @@ async function load(){
 function migrate(){ if(!DB.meta) DB.meta = JSON.parse(JSON.stringify(SEED.meta)); if(!DB.vendas) DB.vendas=[]; }
 async function save(){ 
   try{ 
-    await window.storage.set(KEY, JSON.stringify(DB)); 
+    await window.storage.set(KEY, JSON.stringify(DB));
+    console.log('✓ Salvo localmente');
     // Salvar na nuvem também
     if(supabase){
       try{
@@ -337,10 +338,11 @@ async function save(){
           .from('app_data')
           .upsert({user_id:'family-food',data:DB,updated_at:new Date().toISOString()})
           .select();
-        if(!error) lastCloudSync=Date.now();
-      }catch(e){ console.log('Nuvem offline',e); }
+        if(error) console.log('❌ Erro Supabase:', error);
+        else { console.log('✓ Sincronizado com Supabase'); lastCloudSync=Date.now(); }
+      }catch(e){ console.log('❌ Supabase falhou:', e.message); }
     }
-  }catch(e){}
+  }catch(e){ console.log('❌ Erro ao salvar:', e.message); }
 }
 
 const BRL = n => 'R$ ' + (n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
