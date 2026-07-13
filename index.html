@@ -442,7 +442,7 @@ function renderExtrato(){
     const sub=t.tipo==='Transferência'&&t.contaOrigem?`${t.contaOrigem} → ${t.conta}`:(t.conta+(t.desc?' · '+t.desc:''));
     html+=`<div class="item" data-edit="${t._i}"><div class="ic ${cls}">${ico}</div>
       <div class="mid"><div class="t1">${t.categoria||t.desc||'Transferência'}${pend}</div><div class="t2">${sub}</div></div>
-      <div class="amt" style="color:${col}">${sign}${BRL0(val(t))}</div></div>`;
+      <div class="amt" style="color:${col}">${sign}${BRL(val(t))}</div></div>`;
   });
   document.getElementById('v-extrato').innerHTML=`
     <div class="sec-h" style="margin-top:4px"><h2>Extrato</h2><span class="r">${DB.txs.length} lançamentos</span></div>
