@@ -454,21 +454,22 @@ function renderCartoes(){
   const c=compute();
   const ct=cardsTotal(c);
   const rows=DB.cartoes.map((cd,i)=>{
-    const st=cd.status==='Renegociado'?'<span class="st reneg">Renegociado</span>':'<span class="st aberto">Em aberto</span>';
-    const parc=cd.valorParcela?`${cd.parcelas}x de ${BRL0(cd.valorParcela)}`:'Sem acordo ainda';
+    const stColor=cd.status==='Quitado'?'var(--green)':cd.status==='Renegociado'?'#F59E0B':'var(--red)';
+    const st=`<span class="st" style="background:${stColor}20;color:${stColor};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">${cd.status||'Em aberto'}</span>`;
+    const parc=cd.valorParcela?`${cd.parcelas}x de ${BRL(cd.valorParcela)}`:'Sem acordo ainda';
     const venc=cd.venc?`Vence dia ${cd.venc}`:'';
     const pago=(c.cardPaid&&c.cardPaid[cd.nome])||0;
     const saldo=cardSaldo(cd,c);
-    const pagoTxt=pago>0?` · <span style="color:var(--green)">pago ${BRL0(pago)}</span>`:'';
+    const pagoTxt=pago>0?` · <span style="color:var(--green)">pago ${BRL(pago)}</span>`:'';
     return `<div class="crow" data-cart="${i}" style="cursor:pointer;position:relative"><div style="flex:1"><div class="cn">${cd.nome} ${st}</div>
       <div class="cs">${parc}${venc?' · '+venc:''}${pagoTxt}</div></div>
-      <div class="cv" style="color:var(--red)">${BRL0(saldo)}</div></div>`;
+      <div class="cv" style="color:${cd.status==='Quitado'?'var(--green)':'var(--red)'}">${BRL(saldo)}</div></div>`;
   }).join('');
   
   document.getElementById('v-cartoes').innerHTML=`
     <div class="sec-h" style="margin-top:4px"><h2>Cartões & dívidas</h2><button class="linkbtn" id="addCart">+ novo cartão</button></div>
-    <div class="big-card" style="margin-bottom:12px"><div class="k">Dívida total</div><div class="big" style="color:var(--red)">${BRL0(ct.divida)}</div>
-      <div class="cs">${BRL0(ct.parcelas)}/mês em parcelas de acordos</div></div>
+    <div class="big-card" style="margin-bottom:12px"><div class="k">Dívida total</div><div class="big" style="color:var(--red)">${BRL(ct.divida)}</div>
+      <div class="cs">${BRL(ct.parcelas)}/mês em parcelas de acordos</div></div>
     <div class="sec-h"><h2>Detalhes</h2></div>
     ${rows}
     <div class="hint" style="margin-top:16px">Toque em qualquer cartão pra editar. Quando você pagar uma parcela com categoria "Parcela..." ou "Pagamento...", o saldo abaixa automaticamente.</div>`;
@@ -487,9 +488,9 @@ function openCartSheet(idx){
     <div class="field"><label>Nome do cartão</label><input id="cn" type="text" placeholder="ex: Inter" value="${(cform.nome||'').replace(/"/g,'&quot;')}"></div>
     <div class="field"><label>Status</label>
       <select id="cs">
-        <option ${cform.status==='Renegociado'?'selected':''}>Renegociado</option>
-        <option ${cform.status==='Em aberto'?'selected':''}>Em aberto</option>
-        <option>Quitado</option>
+        <option value="Em aberto" ${cform.status==='Em aberto'?'selected':''}>Em aberto</option>
+        <option value="Renegociado" ${cform.status==='Renegociado'?'selected':''}>Renegociado</option>
+        <option value="Quitado" ${cform.status==='Quitado'?'selected':''}>Quitado</option>
       </select>
     </div>
     <div class="field val"><label>Saldo atual (R$)</label><input id="csa" type="text" inputmode="decimal" placeholder="0,00" value="${cform.saldo?String(cform.saldo).replace('.',','):''}"></div>
