@@ -270,28 +270,61 @@ let DB = null;
 
 async function load(){
   try{
-    // Tenta carregar da nuvem primeiro
-    if(supabase){
-      try{
-        const {data,error}=await supabase
-          .from('app_data')
-          .select('data')
-          .eq('user_id','family-food')
-          .single();
-        if(data && !error){
-          DB=data.data;
-          lastCloudSync=Date.now();
-          console.log('Dados sincronizados da nuvem ✓');
-          migrate();
-          return;
-        }
-      }catch(e){ console.log('Nuvem não disponível',e); }
-    }
-    // Fallback: carregar do localStorage
+    // PRIMEIRO: carregar do localStorage (dados locais são prioritários)
     const r = await window.storage.get(KEY); 
-    if(r && r.value){ DB = JSON.parse(r.value); migrate(); return; }
-  }catch(e){}
-  DB = JSON.parse(JSON.stringify(SEED)); migrate(); await save();
+    if(r && r.value){ 
+      DB = JSON.parse(r.value); 
+      migrate(); 
+      
+      // DEPOIS: sincronizar com Supabase em background (sem bloquear)
+      if(supabase){
+        setTimeout(async()=>{
+          try{
+            const {data,error}=await supabase
+              .from('app_data')
+              .select('data,updated_at')
+              .eq('user_id','family-food')
+              .single();
+            if(data && !error){
+              const localTime=new Date(DB.lastSync||0).getTime();
+              const cloudTime=new Date(data.updated_at).getTime();
+              // Se nuvem é mais recente, atualiza
+              if(cloudTime > localTime){
+                DB=data.data;
+                DB.lastSync=new Date().toISOString();
+                await window.storage.set(KEY, JSON.stringify(DB));
+                console.log('Dados atualizados da nuvem ✓');
+              }
+            }
+          }catch(e){ console.log('Sincronização background falhou',e); }
+        }, 500);
+      }
+      return;
+    }
+  }catch(e){ console.log('Erro ao carregar localStorage',e); }
+  
+  // Se não tem no localStorage, tenta nuvem
+  if(supabase){
+    try{
+      const {data,error}=await supabase
+        .from('app_data')
+        .select('data')
+        .eq('user_id','family-food')
+        .single();
+      if(data && !error){
+        DB=data.data;
+        migrate();
+        await window.storage.set(KEY, JSON.stringify(DB));
+        console.log('Dados carregados da nuvem ✓');
+        return;
+      }
+    }catch(e){ console.log('Nuvem indisponível',e); }
+  }
+  
+  // Fallback: usar seed padrão
+  DB = JSON.parse(JSON.stringify(SEED)); 
+  migrate(); 
+  await save();
 }
 function migrate(){ if(!DB.meta) DB.meta = JSON.parse(JSON.stringify(SEED.meta)); if(!DB.vendas) DB.vendas=[]; }
 async function save(){ 
