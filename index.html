@@ -908,21 +908,9 @@ async function sendCompraWhatsApp(fornecedorNome){
   
   mensagem+='\nObg';
   
-  // Tenta abrir no app nativo do WhatsApp direto (sem modal)
-  const nativeUrl='whatsapp://send?phone='+fornecedor.whatsapp+'&text='+encodeURIComponent(mensagem);
+  // Abre WhatsApp direto
   const webUrl='https://wa.me/'+fornecedor.whatsapp+'?text='+encodeURIComponent(mensagem);
-  
-  // Tenta protocolo nativo
-  const iframe=document.createElement('iframe');
-  iframe.src=nativeUrl;
-  iframe.style.display='none';
-  document.body.appendChild(iframe);
-  
-  // Se app não estiver instalado, abre web depois de 2 segundos
-  setTimeout(()=>{
-    document.body.removeChild(iframe);
-    window.open(webUrl,'_blank');
-  },2000);
+  window.open(webUrl,'_blank');
   
   // limpar campos
   document.querySelectorAll('.compra-qty').forEach(el=>el.value='');
