@@ -564,7 +564,24 @@ function renderMetas(){
       <div class="cs" style="margin-top:8px;font-weight:700;color:${lucro?'var(--green)':'var(--red)'}">${lucro?'✓ A operação em si está saudável':'⚠ A operação está no vermelho'}</div>
     </div>
 
-    <div class="sec-h" style="margin-top:22px"><h2>Metas de vendas</h2><button class="linkbtn" id="editMetas">editar</button></div>
+    <div class="big-card" style="margin-top:12px;border:2px solid ${(lucroOp-c.retiradas-c.dividaPaga)>=0?'var(--green)':'var(--red)'}">
+      <div class="k">Sobra real no caixa</div>
+      <div class="big" style="color:${(lucroOp-c.retiradas-c.dividaPaga)>=0?'var(--green)':'var(--red)'}">${(lucroOp-c.retiradas-c.dividaPaga)>=0?'+':''}${BRL(lucroOp-c.retiradas-c.dividaPaga)}</div>
+      <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
+          <span style="color:var(--ink-soft);font-size:13px">Lucro operacional</span>
+          <span style="font-weight:700;color:${lucro?'var(--green)':'var(--red)'}">${lucro?'+':''}${BRL(lucroOp)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
+          <span style="color:var(--ink-soft);font-size:13px">Pró-labore (retiradas)</span>
+          <span style="font-weight:700;color:var(--red)">−${BRL(c.retiradas)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
+          <span style="color:var(--ink-soft);font-size:13px">Dívidas pagas</span>
+          <span style="font-weight:700;color:var(--red)">−${BRL(c.dividaPaga)}</span>
+        </div>
+      </div>
+    </div><button class="linkbtn" id="editMetas">editar</button></div>
     
     <div class="big-card" style="margin-bottom:14px">
       <div class="k">Vendas registradas</div>
