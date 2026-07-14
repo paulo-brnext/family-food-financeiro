@@ -272,40 +272,7 @@ document.head.appendChild(script);
 let DB = null;
 
 async function load(){
-  try{
-    // Carregar do localStorage nativo
-    const r = localStorage.getItem(KEY);
-    if(r){ 
-      DB = JSON.parse(r); 
-      migrate();
-      // Sincronizar com Supabase em background
-      if(supabase){
-        setTimeout(async()=>{
-          try{
-            const {data,error}=await supabase
-              .from('app_data')
-              .select('data,updated_at')
-              .eq('user_id','family-food')
-              .single();
-            if(data && !error){
-              const localTime=new Date(DB.lastSync||0).getTime();
-              const cloudTime=new Date(data.updated_at).getTime();
-              if(cloudTime > localTime){
-                DB=data.data;
-                DB.lastSync=new Date().toISOString();
-                localStorage.setItem(KEY, JSON.stringify(DB));
-                console.log('✓ Dados atualizados da nuvem');
-                refresh();
-              }
-            }
-          }catch(e){ console.log('Sync background falhou',e); }
-        }, 800);
-      }
-      return;
-    }
-  }catch(e){ console.log('Erro localStorage',e); }
-  
-  // Se não tem local, tenta nuvem
+  // SEMPRE tenta carregar da nuvem primeiro (fonte de verdade)
   if(supabase){
     try{
       const {data,error}=await supabase
@@ -313,38 +280,63 @@ async function load(){
         .select('data')
         .eq('user_id','family-food')
         .single();
-      if(data && !error){
+      if(data && !error && data.data && data.data.txs){
         DB=data.data;
         migrate();
         localStorage.setItem(KEY, JSON.stringify(DB));
         console.log('✓ Dados carregados da nuvem');
         return;
       }
-    }catch(e){ console.log('Nuvem indisponível',e); }
+    }catch(e){ console.log('Nuvem indisponível, usando local',e.message); }
   }
-  
-  // Fallback: seed padrão
-  DB = JSON.parse(JSON.stringify(SEED)); 
-  migrate(); 
-  await save();
+  // Fallback: localStorage
+  try{
+    const r=localStorage.getItem(KEY);
+    if(r){ DB=JSON.parse(r); migrate(); console.log('✓ Dados carregados do local'); return; }
+  }catch(e){}
+  // Seed padrão
+  DB=JSON.parse(JSON.stringify(SEED)); migrate(); await save();
 }
-function migrate(){ if(!DB.meta) DB.meta = JSON.parse(JSON.stringify(SEED.meta)); if(!DB.vendas) DB.vendas=[]; }
-async function save(){ 
-  try{ 
+function migrate(){ if(!DB.meta) DB.meta=JSON.parse(JSON.stringify(SEED.meta)); if(!DB.vendas) DB.vendas=[]; }
+async function save(){
+  try{
+    // Salva LOCAL
     localStorage.setItem(KEY, JSON.stringify(DB));
-    console.log('✓ Salvo localmente');
+    // Salva NUVEM (fonte de verdade)
     if(supabase){
       try{
-        const {data,error}=await supabase
+        const {error}=await supabase
           .from('app_data')
-          .upsert({user_id:'family-food',data:DB,updated_at:new Date().toISOString()})
-          .select();
-        if(error) console.log('❌ Erro Supabase:', error.message);
-        else console.log('✓ Sincronizado com Supabase');
-      }catch(e){ console.log('❌ Supabase falhou:', e.message); }
+          .upsert({user_id:'family-food',data:DB,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+        if(error) console.log('❌ Supabase erro:',error.message);
+        else console.log('✓ Salvo na nuvem');
+      }catch(e){ console.log('❌ Supabase falhou:',e.message); }
     }
-  }catch(e){ console.log('❌ Erro ao salvar:', e.message); }
+  }catch(e){ console.log('❌ Erro save:',e.message); }
 }
+// Sincroniza a cada 30 segundos automaticamente
+setInterval(async()=>{
+  if(!supabase) return;
+  try{
+    const {data,error}=await supabase
+      .from('app_data')
+      .select('data,updated_at')
+      .eq('user_id','family-food')
+      .single();
+    if(data && !error && data.data && data.data.txs){
+      const cloudTxCount=data.data.txs.length;
+      const localTxCount=DB.txs.length;
+      // Se nuvem tem dados diferentes, atualiza tela
+      if(cloudTxCount!==localTxCount){
+        DB=data.data;
+        migrate();
+        localStorage.setItem(KEY,JSON.stringify(DB));
+        console.log('✓ Sincronizado automaticamente');
+        refresh();
+      }
+    }
+  }catch(e){}
+},30000);
 
 const BRL = n => 'R$ ' + (n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const BRL0 = n => 'R$ ' + Math.round(n||0).toLocaleString('pt-BR');
