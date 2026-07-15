@@ -426,6 +426,11 @@ function migrate(){
     // Atualizar mensagem fixa se existir no seed
     if(seedForn[k].mensagemFixa) DB.fornecedoresAtivos[k].mensagemFixa=seedForn[k].mensagemFixa;
   });
+  // Sincronizar categorias novas do seed
+  const seedCats=SEED.listas?.categorias||[];
+  if(!DB.listas) DB.listas=JSON.parse(JSON.stringify(SEED.listas));
+  if(!DB.listas.categorias) DB.listas.categorias=[];
+  seedCats.forEach(cat=>{ if(!DB.listas.categorias.includes(cat)) DB.listas.categorias.push(cat); });
 }
 async function save(){
   try{
