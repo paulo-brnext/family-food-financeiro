@@ -1102,15 +1102,21 @@ function renderLanches(){
   const rows=funcs.map(f=>{
     const nome=f.nome;
     const reg=semana[nome]||{};
-    const total=dias.filter(d=>reg[d.key]).length;
+    // Total de lanches na semana (soma das quantidades)
+    const total=dias.reduce((acc,d)=>acc+(reg[d.key]||0),0);
 
     const diabtns=dias.map(d=>{
-      const pegou=!!reg[d.key];
+      const qtd=reg[d.key]||0;
       const isHoje=d.key===hoje;
-      return `<button onclick="toggleLanche('${nome}','${d.key}')" style="flex:1;border:none;border-radius:8px;padding:6px 2px;background:${pegou?'var(--brand)':'var(--line)'};color:${pegou?'var(--ink)':'var(--ink-faint)'};font-size:11px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;${isHoje?'outline:2px solid var(--ink);outline-offset:1px':''}">
-        <span style="font-size:9px;opacity:.8">${d.label}</span>
-        <span>${pegou?'🍔':'—'}</span>
-      </button>`;
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+        <span style="font-size:9px;color:var(--ink-faint);font-weight:600">${d.label}</span>
+        <div style="display:flex;flex-direction:column;align-items:center;background:${qtd>0?'var(--brand)':'var(--line)'};border-radius:8px;padding:4px 2px;width:100%;${isHoje?'outline:2px solid var(--ink);outline-offset:1px':''}">
+          <button onclick="addLanche('${nome}','${d.key}',1)" style="background:none;border:none;color:${qtd>0?'var(--ink)':'var(--ink-faint)'};font-size:14px;font-weight:900;cursor:pointer;padding:0;line-height:1">+</button>
+          <span style="font-size:13px;font-weight:700;color:${qtd>0?'var(--ink)':'var(--ink-faint)'};line-height:1.2">${qtd>0?qtd:'—'}</span>
+          <button onclick="addLanche('${nome}','${d.key}',-1)" style="background:none;border:none;color:${qtd>0?'var(--ink)':'var(--ink-faint)'};font-size:14px;font-weight:900;cursor:pointer;padding:0;line-height:1;${qtd===0?'opacity:0;pointer-events:none':''}">−</button>
+        </div>
+        ${qtd>0?`<span style="font-size:10px">🍔${qtd>1?'x'+qtd:''}</span>`:'<span style="font-size:10px;opacity:0">.</span>'}
+      </div>`;
     }).join('');
 
     return `<div style="background:var(--card);border-radius:var(--r-sm);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)">
@@ -1131,10 +1137,9 @@ function renderLanches(){
       const ter=new Date(diasSem[0].key);
       const dom=new Date(diasSem[5].key);
       const label=`${ter.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})} a ${dom.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}`;
-      // Resumo por funcionário
       const resumo=funcs.map(f=>{
         const reg=s.dados[f.nome]||{};
-        const qtd=diasSem.filter(d=>reg[d.key]).length;
+        const qtd=diasSem.reduce((acc,d)=>acc+(reg[d.key]||0),0);
         return qtd>0?`<span style="font-size:12px;background:var(--brand-soft);border-radius:20px;padding:2px 8px">${f.nome}: ${qtd}🍔</span>`:null;
       }).filter(Boolean).join('');
       return `<div style="background:var(--card);border-radius:var(--r-sm);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)">
@@ -1146,7 +1151,7 @@ function renderLanches(){
   document.getElementById('v-lanches').innerHTML=`
     <div class="sec-h" style="margin-top:4px"><h2>Lanches da semana</h2><button class="linkbtn" id="addFuncBtn">+ Funcionário</button></div>
     <div style="background:var(--brand-soft);border-radius:var(--r-sm);padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--ink-soft)">
-      Toque no dia pra marcar 🍔 que o funcionário pegou lanche. Toque de novo pra desmarcar.
+      Use <b>+</b> e <b>−</b> pra registrar quantos lanches cada funcionário pegou no dia.
     </div>
     ${rows}
     ${podeFecha?`<button onclick="fecharSemana()" style="width:100%;padding:14px;background:var(--ink);color:var(--brand);border:none;border-radius:var(--r-sm);font-family:'Archivo';font-weight:700;font-size:15px;cursor:pointer;margin-top:4px">✓ Fechar semana</button>`:''}
@@ -1159,14 +1164,16 @@ function renderLanches(){
     await save(); renderLanches();
   };
 }
-async function toggleLanche(nome,diaKey){
+async function addLanche(nome,diaKey,delta){
   const semKey=getSemanaKey();
   if(!DB.lanches) DB.lanches={};
   if(!DB.lanches[semKey]) DB.lanches[semKey]={};
   if(!DB.lanches[semKey][nome]) DB.lanches[semKey][nome]={};
   const reg=DB.lanches[semKey][nome];
-  if(reg[diaKey]) delete reg[diaKey];
-  else reg[diaKey]=true;
+  const atual=reg[diaKey]||0;
+  const novo=Math.max(0,atual+delta);
+  if(novo===0) delete reg[diaKey];
+  else reg[diaKey]=novo;
   await save(); renderLanches();
 }
 async function fecharSemana(){
