@@ -1470,19 +1470,19 @@ function renderClientes(){
     const waUrl='https://wa.me/55'+fone+'?text='+encodeURIComponent(mensagem);
     const dt=c.ultimoPedido?new Date(c.ultimoPedido).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'}):'--';
     return '<div style="background:var(--card);border-radius:var(--r-sm);padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);opacity:'+(jaEnv?.5:1)+'">'
-      +'<div style="width:40px;height:40px;border-radius:50%;background:'+(jaEnv?'var(--green)':'var(--paper)')+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:'+(jaEnv?'#fff':'var(--ink-soft)')+';flex-shrink:0">'+(jaEnv?'\u2713':c.nome[0].toUpperCase())+'</div>'
+      +'<div style="width:40px;height:40px;border-radius:50%;background:'+(jaEnv?'var(--green)':'var(--paper)')+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:'+(jaEnv?'#fff':'var(--ink-soft)')+';flex-shrink:0">'+(jaEnv?'✓':c.nome[0].toUpperCase())+'</div>'
       +'<div style="flex:1;min-width:0">'
         +'<div style="font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.nome+'</div>'
-        +'<div style="font-size:12px;color:var(--ink-faint);margin-top:2px">'+c.telefone+' \u00B7 '+c.totalPedidos+' pedidos</div>'
-        +'<div style="font-size:11px;font-weight:600;margin-top:2px;color:'+(jaEnv?'var(--green)':'var(--red)')+'">'+( jaEnv?'\u2713 Enviado':'\u00DAlt. pedido: '+dt+' ('+c.diasSemPedir+'d)')+'</div>'
+        +'<div style="font-size:12px;color:var(--ink-faint);margin-top:2px">'+c.telefone+' · '+c.totalPedidos+' pedidos</div>'
+        +'<div style="font-size:11px;font-weight:600;margin-top:2px;color:'+(jaEnv?'var(--green)':'var(--red)')+'">'+( jaEnv?'✓ Enviado':'Ult. pedido: '+dt+' ('+c.diasSemPedir+'d)')+'</div>'
       +'</div>'
       +'<div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">'
-        +(!jaEnv?'<a href="'+waUrl+'" target="_blank" onclick="markSent(\''+chave+'\')" style="background:#25D366;color:#fff;border-radius:20px;padding:7px 12px;font-size:13px;font-weight:700;text-decoration:none;text-align:center">\u{1F4F2}</a>'
-               +'<button onclick="markSent(\''+chave+'\')" style="background:none;border:1px solid var(--line);border-radius:20px;padding:5px 8px;font-size:10px;color:var(--ink-faint);cursor:pointer">J\u00E1 enviei</button>'
+        +(!jaEnv?'<a href="'+waUrl+'" target="_blank" onclick="markSent(\''+chave+'\')" style="background:#25D366;color:#fff;border-radius:20px;padding:7px 12px;font-size:12px;font-weight:700;text-decoration:none;text-align:center">Enviar</a>'
+               +'<button onclick="markSent(\''+chave+'\')" style="background:none;border:1px solid var(--line);border-radius:20px;padding:5px 8px;font-size:10px;color:var(--ink-faint);cursor:pointer">Ja enviei</button>'
         :'<button onclick="unmarkSent(\''+chave+'\')" style="background:none;border:1px solid var(--line);border-radius:20px;padding:5px 8px;font-size:10px;color:var(--ink-faint);cursor:pointer">Desfazer</button>')
       +'</div>'
     +'</div>';
-  }).join(''):'<div style="text-align:center;padding:40px;color:var(--ink-faint)"><div style="font-size:36px;margin-bottom:10px">\u{1F50D}</div><div style="font-weight:600">Nenhum cliente nessa faixa</div></div>';
+  }).join(''):'<div style="text-align:center;padding:40px;color:var(--ink-faint)"><div style="font-size:36px;margin-bottom:10px">🔍</div><div style="font-weight:600">Nenhum cliente nessa faixa</div></div>';
 
   document.getElementById('v-clientes').innerHTML=`
     <div class="sec-h" style="margin-top:4px"><h2>Reativar clientes</h2></div>
