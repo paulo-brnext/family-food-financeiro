@@ -408,7 +408,8 @@ function migrate(){
   if(!DB.meta) DB.meta=JSON.parse(JSON.stringify(SEED.meta)); 
   if(!DB.vendas) DB.vendas=[];
   if(!DB.lanches) DB.lanches={};
-  if(!DB.clientes) DB.clientes=[];
+  // Garantir clientes do seed sempre presentes
+  if(!DB.clientes||DB.clientes.length===0) DB.clientes=JSON.parse(JSON.stringify(SEED.clientes||[]));
   if(!DB.funcionarios||DB.funcionarios.length===0) DB.funcionarios=JSON.parse(JSON.stringify(SEED.funcionarios||[]));
   if(!DB.listasCompras||DB.listasCompras.length===0) DB.listasCompras=JSON.parse(JSON.stringify(SEED.listasCompras||[]));
   // Sincronizar fornecedores novos do seed
