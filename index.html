@@ -817,10 +817,10 @@ function renderMetas(){
         analise='Excelente! O negócio gerou lucro suficiente para cobrir tudo — operação, retiradas e dívidas. Use o que sobrou para abater mais dívidas e acelerar a quitação.';
       } else if(pctDivida>60){
         icone='⚠️'; cor='#F59E0B';
-        analise='A operação está saudável, mas as parcelas das dívidas (${pctDivida.toFixed(0)}% do lucro) estão pesando muito no caixa. Cada cartão quitado vai liberar fôlego todo mês.';
+        analise='A operação está saudável, mas as parcelas das dívidas ('+pctDivida.toFixed(0)+'% do lucro) estão pesando muito no caixa. Cada cartão quitado vai liberar fôlego todo mês.';
       } else if(pctProLabore>50){
         icone='⚠️'; cor='#F59E0B';
-        analise='O negócio está gerando lucro, mas o pró-labore (${pctProLabore.toFixed(0)}% do lucro) combinado com as dívidas está consumindo mais do que entra. Considere reduzir temporariamente as retiradas para equilibrar.';
+        analise='O negócio está gerando lucro, mas o pró-labore ('+pctProLabore.toFixed(0)+'% do lucro) combinado com as dívidas está consumindo mais do que entra. Considere reduzir temporariamente as retiradas para equilibrar.';
       } else {
         icone='⚠️'; cor='#F59E0B';
         analise='A operação está saudável, mas dívidas e retiradas juntas estão consumindo mais do que o lucro gerado. Com o tempo, conforme as dívidas forem sendo quitadas, o caixa vai melhorar.';
