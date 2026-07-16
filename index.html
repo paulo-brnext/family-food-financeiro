@@ -789,12 +789,56 @@ function renderMetas(){
           <span style="color:var(--ink-soft);font-size:13px">Pró-labore (retiradas)</span>
           <span style="font-weight:700;color:var(--red)">−${BRL(c.retiradas)}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
           <span style="color:var(--ink-soft);font-size:13px">Dívidas pagas</span>
           <span style="font-weight:700;color:var(--red)">−${BRL(c.dividaPaga)}</span>
         </div>
       </div>
-    </div><button class="linkbtn" id="editMetas">editar</button></div>
+      <div style="margin-top:12px;font-size:12px;color:var(--ink-faint);line-height:1.5;padding-top:10px;border-top:1px solid var(--line)">
+        💡 <b>O que significa:</b> Lucro operacional é o que o negócio gerou vendendo menos os custos do dia a dia. Pró-labore é o que a família retirou. Dívidas pagas são as parcelas dos cartões. A sobra real é o que ficou no caixa depois de tudo isso.
+      </div>
+    </div>
+
+    ${(()=>{
+      const sobraReal=lucroOp-c.retiradas-c.dividaPaga;
+      const pctDivida=lucroOp>0?(c.dividaPaga/lucroOp*100):0;
+      const pctProLabore=lucroOp>0?(c.retiradas/lucroOp*100):0;
+      let analise='';
+      let cor='var(--ink-soft)';
+      let icone='📊';
+
+      if(!lucro){
+        icone='🔴'; cor='var(--red)';
+        analise='A operação está no vermelho — os custos do dia a dia estão maiores que as vendas. Prioridade: revisar os gastos operacionais e tentar aumentar o faturamento.';
+      } else if(sobraReal>=0){
+        icone='✅'; cor='var(--green)';
+        analise='Excelente! O negócio gerou lucro suficiente para cobrir tudo — operação, retiradas e dívidas. Use o que sobrou para abater mais dívidas e acelerar a quitação.';
+      } else if(pctDivida>60){
+        icone='⚠️'; cor='#F59E0B';
+        analise='A operação está saudável, mas as parcelas das dívidas (${pctDivida.toFixed(0)}% do lucro) estão pesando muito no caixa. Cada cartão quitado vai liberar fôlego todo mês.';
+      } else if(pctProLabore>50){
+        icone='⚠️'; cor='#F59E0B';
+        analise='O negócio está gerando lucro, mas o pró-labore (${pctProLabore.toFixed(0)}% do lucro) combinado com as dívidas está consumindo mais do que entra. Considere reduzir temporariamente as retiradas para equilibrar.';
+      } else {
+        icone='⚠️'; cor='#F59E0B';
+        analise='A operação está saudável, mas dívidas e retiradas juntas estão consumindo mais do que o lucro gerado. Com o tempo, conforme as dívidas forem sendo quitadas, o caixa vai melhorar.';
+      }
+
+      return `<div style="background:var(--card);border-radius:var(--r-sm);padding:16px;margin-top:12px;box-shadow:var(--shadow);border-left:4px solid ${cor}">
+        <div style="font-family:'Archivo';font-weight:700;font-size:14px;margin-bottom:8px">${icone} Análise do mês</div>
+        <div style="font-size:13px;color:var(--ink-soft);line-height:1.6">${analise}</div>
+        ${pctDivida>0?`<div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:var(--paper);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:var(--ink-faint);text-transform:uppercase">Dívidas vs Lucro</div>
+            <div style="font-family:'Archivo';font-weight:800;font-size:20px;color:${pctDivida>60?'var(--red)':'var(--ink)'}">${pctDivida.toFixed(0)}%</div>
+          </div>
+          <div style="background:var(--paper);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:var(--ink-faint);text-transform:uppercase">Pró-labore vs Lucro</div>
+            <div style="font-family:'Archivo';font-weight:800;font-size:20px;color:${pctProLabore>50?'var(--red)':'var(--ink)'}">${pctProLabore.toFixed(0)}%</div>
+          </div>
+        </div>`:''}
+      </div>`;
+    })()}<button class="linkbtn" id="editMetas">editar</button></div>
     
     <div class="big-card" style="margin-bottom:14px">
       <div class="k">Vendas registradas</div>
