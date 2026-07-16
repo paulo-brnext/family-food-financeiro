@@ -743,12 +743,14 @@ function renderMetas(){
   const vendasReais=(DB.vendas||[]).reduce((a,v)=>a+(v.valor||0),0);   // vendas cheias (Consumer, referência)
   const pct=Math.min(100, meta.valor? vendasReais/meta.valor*100 : 0);
   const falta=Math.max(0, meta.valor-vendasReais);
-  // dias decorridos: pela última data de vendas registrada (senão, pelos lançamentos)
-  let lastDay=0; (DB.vendas||[]).forEach(v=>{const d=parseD(v.data);if(d)lastDay=Math.max(lastDay,d.getDate());});
-  if(!lastDay) DB.txs.forEach(t=>{const d=parseD(t.data);if(d)lastDay=Math.max(lastDay,d.getDate());});
-  lastDay=Math.max(1,lastDay);
-  const diasRest=Math.max(1,31-lastDay), ritmo=vendasReais/lastDay, precisa=falta/diasRest;
-  const noPace = ritmo>=precisa;
+  // Dias decorridos e restantes baseado na data atual
+  const hoje=new Date();
+  const diaHoje=hoje.getDate();
+  const ultimoDiaMes=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
+  const diasRest=Math.max(1, ultimoDiaMes-diaHoje);
+  const ritmo=vendasReais/Math.max(1,diaHoje);
+  const precisa=falta/diasRest;
+  const noPace=ritmo>=precisa;
 
   const outMap={};
   DB.txs.forEach(t=>{ if(t.tipo==='Saída')outMap[t.categoria||'Outros']=(outMap[t.categoria||'Outros']||0)+t.saida; });
