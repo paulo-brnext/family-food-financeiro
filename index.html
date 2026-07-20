@@ -877,7 +877,7 @@ function renderMetas(){
     ${vendasReais>0?`<div class="note" style="margin-top:10px">A diferença de <b>${BRL0(difVendaCaixa)}</b> entre o que vendeu e o que caiu é taxa do iFood/cartão + o que ainda vai pingar nos próximos dias. Normal.</div>`:''}
 
     <div class="sec kpi">
-      <div class="card"><div class="k">Ritmo atual</div><div class="v" style="font-size:19px">${BRL0(ritmo)}<span style="font-size:12px;color:var(--ink-faint)">/dia</span></div><div class="h">média nos ${lastDay} dias</div></div>
+      <div class="card"><div class="k">Ritmo atual</div><div class="v" style="font-size:19px">${BRL0(ritmo)}<span style="font-size:12px;color:var(--ink-faint)">/dia</span></div><div class="h">média nos ${diaHoje} dias</div></div>
       <div class="card"><div class="k">Precisa vender</div><div class="v" style="font-size:19px;color:${noPace?'var(--green)':'var(--red)'}">${BRL0(precisa)}<span style="font-size:12px;color:var(--ink-faint)">/dia</span></div><div class="h">${noPace?'você está no ritmo ✓':'nos '+diasRest+' dias restantes'}</div></div>
     </div>
 
