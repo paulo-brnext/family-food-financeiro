@@ -589,7 +589,7 @@ function compute(){
           resultado:entradas-saidasPagas};
 }
 function cardSaldo(cd,c){ return Math.max(0, cd.saldo-((c.cardPaid&&c.cardPaid[cd.nome])||0)); }
-function cardsTotal(c){ let d=0,parc=0; DB.cartoes.forEach(cd=>{ if(cd.status==='Quitado') return; d+=cardSaldo(cd,c); if(cd.valorParcela)parc+=cd.valorParcela;}); return {divida:d,parcelas:parc}; }
+function cardsTotal(c){ let d=0,parc=0; DB.cartoes.forEach(cd=>{ if(cd.status==='Quitado') return; d+=cardSaldo(cd,c)+(cd.faturaMes||0); if(cd.valorParcela)parc+=cd.valorParcela;}); return {divida:d,parcelas:parc}; }
 
 /* ---------- Início ---------- */
 function renderInicio(){
@@ -669,9 +669,10 @@ function renderCartoes(){
     const pago=(c.cardPaid&&c.cardPaid[cd.nome])||0;
     const saldo=cardSaldo(cd,c);
     const pagoTxt=pago>0?` · <span style="color:var(--green)">pago ${BRL(pago)}</span>`:'';
+    const faturaTxt=cd.faturaMes>0?`<div style="font-size:11px;color:#F59E0B;font-weight:600;margin-top:3px">📄 Fatura do mês: ${BRL(cd.faturaMes)}</div>`:'';
     return `<div class="crow" data-cart="${i}" style="cursor:pointer;position:relative"><div style="flex:1"><div class="cn">${cd.nome} ${st}</div>
-      <div class="cs">${parc}${venc?' · '+venc:''}${pagoTxt}</div></div>
-      <div class="cv" style="color:${cd.status==='Quitado'?'var(--green)':'var(--red)'}">${BRL(saldo)}</div></div>`;
+      <div class="cs">${parc}${venc?' · '+venc:''}${pagoTxt}</div>${faturaTxt}</div>
+      <div class="cv" style="color:${cd.status==='Quitado'?'var(--green)':'var(--red)'}">${BRL(saldo)}${cd.faturaMes>0?`<div style="font-size:11px;color:#F59E0B">+${BRL(cd.faturaMes)}</div>`:''}</div></div>`;
   }).join('');
   
   document.getElementById('v-cartoes').innerHTML=`
@@ -688,7 +689,7 @@ function renderCartoes(){
 
 let cform=null;
 function openCartSheet(idx){
-  const cd=idx!=null?{...DB.cartoes[idx]}:{nome:'',status:'Em aberto',saldo:0,entrada:0,parcelas:0,valorParcela:0,venc:'',obs:''};
+  const cd=idx!=null?{...DB.cartoes[idx]}:{nome:'',status:'Em aberto',saldo:0,entrada:0,parcelas:0,valorParcela:0,venc:'',obs:'',faturaMes:0};
   cform={...cd,_edit:idx};
   document.getElementById('sheet').innerHTML=`
     <div class="grab"></div>
@@ -707,7 +708,8 @@ function openCartSheet(idx){
       <div class="field"><label>Valor/parcela (R$)</label><input id="cpv" type="text" inputmode="decimal" placeholder="0,00" value="${cform.valorParcela?String(cform.valorParcela).replace('.',','):''}"></div>
     </div>
     <div class="field"><label>Vencimento (dia do mês)</label><input id="cvn" type="text" placeholder="ex: 20" value="${cform.venc||''}"></div>
-    <div class="field"><label>Observação</label><input id="co" type="text" placeholder="ex: renovação mês que vem" value="${(cform.obs||'').replace(/"/g,'&quot;')}"></div>
+    <div class="field val"><label>Fatura do mês (R$) — uso atual do cartão</label><input id="cfm" type="text" inputmode="decimal" placeholder="0,00" value="${cform.faturaMes?String(cform.faturaMes).replace('.',','):''}"></div>
+    <div class="field"><label>Observação</label><input id="co" type="text" placeholder="ex: Face Ads" value="${(cform.obs||'').replace(/"/g,'&quot;')}"></div>
     <button class="save" id="csave">${idx!=null?'Salvar alterações':'Criar cartão'}</button>
     ${idx!=null?'<button class="del" id="cdel">Excluir cartão</button>':''}
   `;
@@ -724,7 +726,8 @@ async function saveCart(){
   const saldo=(()=>{let r=String(g('csa')).trim();return parseFloat(r.includes(',')? r.replace(/\./g,'').replace(',','.') : r)||0;})();
   const parc=parseInt(g('cpa'))||0;
   const valPar=(()=>{let r=String(g('cpv')).trim();return parseFloat(r.includes(',')? r.replace(/\./g,'').replace(',','.') : r)||0;})();
-  const rec={nome,status:g('cs'),saldo,parcelas:parc,valorParcela:valPar,venc:g('cvn'),obs:g('co')||''};
+  const faturaMes=(()=>{let r=String(g('cfm')).trim();return parseFloat(r.includes(',')? r.replace(/\./g,'').replace(',','.') : r)||0;})();
+  const rec={nome,status:g('cs'),saldo,parcelas:parc,valorParcela:valPar,venc:g('cvn'),obs:g('co')||'',faturaMes};
   if(cform._edit!=null)DB.cartoes[cform._edit]=rec; else DB.cartoes.push(rec);
   await save();closeSheet();toast(cform._edit!=null?'Cartão atualizado ✓':'Cartão criado ✓');renderCartoes();
 }
