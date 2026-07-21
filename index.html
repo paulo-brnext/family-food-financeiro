@@ -253,7 +253,7 @@ select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.o
     <div style="display:flex;align-items:center;gap:10px">
       <div class="today"><span>Hoje</span><b id="todayLbl">—</b></div>
       <button id="eyeBtn" onclick="toggleValues()" style="background:rgba(255,255,255,.15);border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
-        <svg id="eyeIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
       <button id="menuBtn" style="background:rgba(255,255,255,.15);border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;position:relative">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -339,17 +339,24 @@ function toggleValues(){
   valuesHidden=!valuesHidden;
   localStorage.setItem('ff:hidden',valuesHidden?'1':'0');
   applyValuesHidden();
-  refresh();
+  // Atualizar hero
+  const c=compute();
+  const hv=document.getElementById('heroCaixaVal');
+  const hl=document.getElementById('heroLivre');
+  const hr=document.getElementById('heroReserva');
+  if(hv) hv.textContent=valuesHidden?'R$ ••••':BRL(c.total);
+  if(hl) hl.textContent=valuesHidden?'••••':BRL0(c.operacional);
+  if(hr) hr.textContent=valuesHidden?'••••':BRL0(c.reserva);
+  // Atualizar dashboard
+  if(cur==='inicio') renderInicio();
 }
 function applyValuesHidden(){
-  const icon=document.getElementById('eyeIcon');
-  if(!icon) return;
+  const btn=document.getElementById('eyeBtn');
+  if(!btn) return;
   if(valuesHidden){
-    icon.innerHTML='<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
-    icon.setAttribute('stroke','rgba(255,255,255,.5)');
+    btn.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2" stroke-linecap="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
   } else {
-    icon.innerHTML='<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-    icon.setAttribute('stroke','#fff');
+    btn.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
   }
 }
 function maskVal(val){ return valuesHidden?'R$ ••••':''+val; }
@@ -689,7 +696,7 @@ function renderInicio(){
     return `<div style="background:var(--card);border-radius:14px;padding:14px;box-shadow:var(--shadow);position:relative;overflow:hidden">
       <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${cor}"></div>
       <div style="font-size:11px;font-weight:600;color:var(--ink-faint);margin-bottom:4px">${a.nome}</div>
-      <div style="font-family:'Archivo';font-weight:800;font-size:20px;color:${cor}">${BRL(v)}</div>
+      <div style="font-family:'Archivo';font-weight:800;font-size:20px;color:${cor}">${valuesHidden?'••••':BRL(v)}</div>
       ${isRes?'<div style="background:#EFF6FF;color:#1D4ED8;font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px;display:inline-block;margin-top:4px">🔒 Reserva dívidas</div>':'<div style="font-size:9px;color:var(--ink-faint);margin-top:4px;text-transform:uppercase;font-weight:600">Conta</div>'}
     </div>`;
   }).join('');
@@ -739,8 +746,10 @@ function renderInicio(){
   const ultimoDia=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
   const diasRest=Math.max(1,ultimoDia-diaHoje);
   const metaAtual=DB.meta?.boa||109315;
-  const falta=Math.max(0,metaAtual-c.receitaVenda);
-  const pctMeta=Math.min(100,(c.receitaVenda/metaAtual*100)).toFixed(0);
+  // Usar vendas registradas no Consumer (aba Vendas)
+  const vendasConsumer=(DB.vendas||[]).reduce((a,v)=>a+(v.valor||0),0);
+  const falta=Math.max(0,metaAtual-vendasConsumer);
+  const pctMeta=Math.min(100,(vendasConsumer/metaAtual*100)).toFixed(0);
 
   document.getElementById('v-inicio').innerHTML=`
     <!-- KPIs resultado -->
@@ -750,17 +759,17 @@ function renderInicio(){
         <div style="background:var(--card);border-radius:14px;padding:12px;box-shadow:var(--shadow);text-align:center">
           <div style="font-size:18px;margin-bottom:6px">💰</div>
           <div style="font-size:9px;color:var(--ink-faint);text-transform:uppercase;font-weight:600">Vendas</div>
-          <div style="font-family:'Archivo';font-weight:800;font-size:15px;margin-top:3px;color:var(--green)">${BRL0(c.receitaVenda)}</div>
+          <div style="font-family:'Archivo';font-weight:800;font-size:15px;margin-top:3px;color:var(--green)">${valuesHidden?'••••':BRL0(c.receitaVenda)}</div>
         </div>
         <div style="background:var(--card);border-radius:14px;padding:12px;box-shadow:var(--shadow);text-align:center">
           <div style="font-size:18px;margin-bottom:6px">⚙️</div>
           <div style="font-size:9px;color:var(--ink-faint);text-transform:uppercase;font-weight:600">Custos op.</div>
-          <div style="font-family:'Archivo';font-weight:800;font-size:15px;margin-top:3px;color:var(--red)">${BRL0(c.custosOp)}</div>
+          <div style="font-family:'Archivo';font-weight:800;font-size:15px;margin-top:3px;color:var(--red)">${valuesHidden?'••••':BRL0(c.custosOp)}</div>
         </div>
         <div style="background:var(--card);border-radius:14px;padding:12px;box-shadow:var(--shadow);text-align:center">
           <div style="font-size:18px;margin-bottom:6px">📈</div>
           <div style="font-size:9px;color:var(--ink-faint);text-transform:uppercase;font-weight:600">Lucro op.</div>
-          <div style="font-family:'Archivo';font-weight:800;font-size:15px;margin-top:3px;color:${lucroOp>=0?'var(--green)':'var(--red)'}">${BRL0(lucroOp)}</div>
+          <div style="font-family:'Archivo';font-weight:800;font-size:15px;margin-top:3px;color:${lucroOp>=0?'var(--green)':'var(--red)'}">${valuesHidden?'••••':BRL0(lucroOp)}</div>
         </div>
       </div>
 
@@ -776,7 +785,7 @@ function renderInicio(){
           <div style="position:relative;width:130px;height:130px;flex-shrink:0">
             <svg viewBox="0 0 36 36" width="130" height="130" style="transform:rotate(-90deg)">${segments}</svg>
             <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
-              <div style="font-family:'Archivo';font-weight:900;font-size:13px;color:var(--ink)">${BRL0(totalGasto)}</div>
+              <div style="font-family:'Archivo';font-weight:900;font-size:13px;color:var(--ink)">${valuesHidden?'••••':BRL0(totalGasto)}</div>
               <div style="font-size:9px;color:var(--ink-faint);text-transform:uppercase;font-weight:600;margin-top:1px">Total gasto</div>
             </div>
           </div>
@@ -794,8 +803,8 @@ function renderInicio(){
           <div style="height:100%;width:${pctMeta}%;background:linear-gradient(90deg,#22C55E,var(--brand));border-radius:8px"></div>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-faint)">
-          <span><b>${BRL0(c.receitaVenda)}</b> vendidos</span>
-          <span>faltam <b>${BRL0(falta)}</b> · ${diasRest}d</span>
+          <span><b>${valuesHidden?'••••':BRL0(vendasConsumer)}</b> vendidos</span>
+          <span>faltam <b>${valuesHidden?'••••':BRL0(falta)}</b> · ${diasRest}d</span>
         </div>
       </div>
 
