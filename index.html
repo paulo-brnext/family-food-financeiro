@@ -1283,13 +1283,30 @@ function renderCompras(){
   document.getElementById('addProdBtn').onclick=()=>openAddProdutoModal(fornecedorAtual);
   document.querySelectorAll('.fornecedor-btn').forEach(btn=>{
     btn.onclick=async(e)=>{
+      // Salva valores atuais antes de trocar
+      salvarValoresCompras(fornecedorAtual);
       DB.fornecedorComprasAtivo=e.target.dataset.forn;
       await save();
       renderCompras();
     };
   });
-  
-  document.getElementById('sendWhatsApp').onclick=()=>sendCompraWhatsApp(fornecedorAtual);
+
+  // Salvar valores ao digitar
+  document.querySelectorAll('.compra-qty').forEach(el=>{
+    el.oninput=()=>salvarValoresCompras(fornecedorAtual);
+  });
+
+  document.getElementById('sendWhatsApp').onclick=()=>{
+    salvarValoresCompras(fornecedorAtual);
+    sendCompraWhatsApp(fornecedorAtual);
+  };
+}
+
+function salvarValoresCompras(fornecedorNome){
+  if(!DB.comprasAtivas) DB.comprasAtivas={};
+  const vals=[];
+  document.querySelectorAll('.compra-qty').forEach(el=>vals.push(el.value));
+  DB.comprasAtivas[fornecedorNome]=vals;
 }
 
 async function openAddFornecedorModal(){
