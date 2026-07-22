@@ -551,11 +551,44 @@ async function save(){
   try{
     DB._savedAt=new Date().toISOString();
     localStorage.setItem(KEY, JSON.stringify(DB));
-    // Atualizar indicador de status
     const ind=document.getElementById('syncIndicator');
-    if(ind) ind.style.background='#F59E0B'; // amarelo = salvando
+    if(ind) ind.style.background='#F59E0B';
     if(supabase){
       try{
+        // PROTEÇÃO: verificar se dados da nuvem são mais recentes antes de salvar
+        const {data:cloudData}=await supabase
+          .from('app_data')
+          .select('updated_at')
+          .eq('user_id','family-food')
+          .single();
+        
+        if(cloudData){
+          const cloudTime=new Date(cloudData.updated_at).getTime();
+          const localTime=new Date(DB._savedAt).getTime();
+          // Se nuvem tem dados de menos de 1 minuto atrás e são mais recentes, não sobrescreve
+          const diffMinutos=(localTime-cloudTime)/1000/60;
+          if(diffMinutos < -1){
+            console.log('⚠️ Nuvem mais recente! Buscando dados antes de salvar...');
+            // Buscar dados da nuvem primeiro
+            const {data}=await supabase.from('app_data').select('data').eq('user_id','family-food').single();
+            if(data&&data.data){
+              const cloud=data.data;
+              // Mesclar: manter txs da nuvem se tiver mais
+              if((cloud.txs||[]).length>(DB.txs||[]).length){
+                DB.txs=cloud.txs;
+                DB.vendas=cloud.vendas||DB.vendas;
+                DB.cartoes=cloud.cartoes||DB.cartoes;
+                DB.history=cloud.history||DB.history;
+                localStorage.setItem(KEY,JSON.stringify(DB));
+                console.log('✓ Dados mesclados com a nuvem');
+                if(ind) ind.style.background='#22C55E';
+                refresh();
+                return;
+              }
+            }
+          }
+        }
+
         const payload={
           txs:DB.txs, vendas:DB.vendas, cartoes:DB.cartoes, contas:DB.contas,
           meta:DB.meta, history:DB.history, lanches:DB.lanches,
@@ -570,10 +603,10 @@ async function save(){
           .upsert({user_id:'family-food',data:payload,updated_at:DB._savedAt},{onConflict:'user_id'});
         if(error){
           console.log('❌ Supabase erro:',error.message);
-          if(ind) ind.style.background='#EF4444'; // vermelho = erro
+          if(ind) ind.style.background='#EF4444';
         } else {
           console.log('✓ Salvo na nuvem');
-          if(ind){ ind.style.background='#22C55E'; setTimeout(()=>ind.style.background='#22C55E',2000); } // verde = ok
+          if(ind) ind.style.background='#22C55E';
         }
       }catch(e){
         console.log('❌ Supabase falhou:',e.message);
@@ -582,7 +615,6 @@ async function save(){
     }
   }catch(e){ console.log('❌ Erro save:',e.message); }
 }
-
 // Salvar ao fechar/recarregar a página
 window.addEventListener('beforeunload', ()=>{
   const payload={
